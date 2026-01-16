@@ -29,9 +29,14 @@ Analyzes code for potential quality issues, design problems, and maintainability
 **Use when:** You want to identify problematic patterns in existing code before refactoring.
 
 #### refactoring-expert
-Generates comprehensive refactoring recommendations based on detected code smells. Provides specific techniques and step-by-step guidance for improving code quality.
+Generates comprehensive refactoring recommendations based on detected code smells. Provides specific techniques and step-by-step guidance for improving code quality. Includes knowledge of both Martin Fowler's *"Refactoring: Improving the Design of Existing Code"* and Joshua Kerievsky's *"Refactoring to Patterns"*.
 
 **Use when:** You have identified code smells and need expert guidance on refactoring approaches.
+
+#### legacy-code-expert
+Specializes in safely modifying legacy code that lacks tests. Based on Michael Feathers' *"Working Effectively with Legacy Code"*, it applies techniques including seam identification, dependency-breaking, and characterization testing strategies.
+
+**Use when:** You need to modify code that has no tests, break dependencies to enable testability, or introduce tests into existing codebases.
 
 ## Agent Pipelines
 
@@ -61,7 +66,21 @@ Legacy Code → code-smell-detector → refactoring-expert → Implementation
 
 **Best for:** Legacy code improvement, technical debt reduction, code quality enhancement
 
-### Pipeline 3: Hybrid Development (Analysis + Quality)
+### Pipeline 3: Safe Legacy Code Modification (Analysis → Dependency Breaking → Testing)
+
+```
+Untested Code → legacy-code-expert → Characterization Tests → Safe Modification
+```
+
+**Workflow:**
+1. **legacy-code-expert**: Analyzes code for seams, identifies dependency-breaking techniques
+2. Apply recommended techniques to create testability
+3. Write characterization tests to document existing behavior
+4. Make changes safely with test coverage
+
+**Best for:** Modifying code without tests, introducing testability, breaking problematic dependencies
+
+### Pipeline 4: Hybrid Development (Analysis + Quality)
 
 ```
 Problem Statement → problem-analyst → user-story-writer → atdd-developer → code-smell-detector → refactoring-expert
@@ -79,8 +98,11 @@ Problem Statement → problem-analyst → user-story-writer → atdd-developer �
 ### Example 1: Tax Calculator Service
 Located in `examples/tax-calculator/` - demonstrates the complete feature development pipeline from problem analysis through ATDD implementation.
 
-### Example 2: Legacy Code Refactoring  
-Located in `examples/legacy-refactoring/` - shows how to identify code smells and create systematic refactoring plans.
+### Example 2: Legacy Code Refactoring
+Located in `examples/legacy-refactoring/` - shows how to identify code smells and create systematic refactoring plans for a UserManager class with multiple responsibilities.
+
+### Example 3: Refactoring to Patterns
+Located in `examples/refactoring-to-patterns/` - demonstrates applying Joshua Kerievsky's pattern-directed refactoring techniques to an OrderProcessingSystem, showing how to evolve code toward design patterns through safe, incremental steps.
 
 ## Getting Started
 
