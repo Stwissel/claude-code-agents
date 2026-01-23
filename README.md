@@ -38,6 +38,11 @@ Specializes in safely modifying legacy code that lacks tests. Based on Michael F
 
 **Use when:** You need to modify code that has no tests, break dependencies to enable testability, or introduce tests into existing codebases.
 
+#### test-design-reviewer
+Evaluates test quality using Dave Farley's testing principles. Scores test suites against eight properties: Understandable, Maintainable, Repeatable, Atomic, Necessary, Granular, Fast, and First (TDD). Produces a weighted "Farley Score" with detailed analysis and improvement recommendations.
+
+**Use when:** You want to assess the quality of your tests, identify flaky or brittle tests, or ensure your test suite follows TDD best practices.
+
 ## Agent Pipelines
 
 ### Pipeline 1: Feature Development (Problem → Stories → Implementation)
@@ -93,6 +98,19 @@ Problem Statement → problem-analyst → user-story-writer → atdd-developer �
 
 **Best for:** High-quality feature development with built-in quality assurance
 
+### Pipeline 5: Test Quality Assessment
+
+```
+Test Suite → test-design-reviewer → Improvement Plan → Refactored Tests
+```
+
+**Workflow:**
+1. **test-design-reviewer**: Analyzes test files against Farley's eight properties
+2. Review the Farley Score and detailed property breakdown
+3. Apply recommendations to improve test quality
+
+**Best for:** Auditing existing test suites, improving flaky tests, ensuring TDD compliance
+
 ## Examples
 
 ### Example 1: Tax Calculator Service
@@ -103,6 +121,12 @@ Located in `examples/legacy-refactoring/` - shows how to identify code smells an
 
 ### Example 3: Refactoring to Patterns
 Located in `examples/refactoring-to-patterns/` - demonstrates applying Joshua Kerievsky's pattern-directed refactoring techniques to an OrderProcessingSystem, showing how to evolve code toward design patterns through safe, incremental steps.
+
+### Example 4: Test Quality Assessment - Low Score
+Located in `examples/test-quality-low-score/` - demonstrates an expression parser with poorly designed tests that violate Farley's testing principles, resulting in a low Farley Score. Shows common anti-patterns to avoid.
+
+### Example 5: Test Quality Assessment - High Score
+Located in `examples/test-quality-high-score/` - demonstrates the same expression parser with well-designed tests following TDD principles, achieving a high Farley Score. Shows best practices for test design.
 
 ## Getting Started
 
