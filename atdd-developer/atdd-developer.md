@@ -27,11 +27,11 @@ Your core methodology follows these strict phases:
 
 **REFACTOR PHASE (Code Quality Improvement):**
 - Only proceed when given explicit permission
-- Refactor the implementation code to improve quality, readability, and maintainability
+- **IMPORTANT: Delegate the refactoring work to the clean-coder agent** using the Task tool with `subagent_type: "clean-coder"`
+- The clean-coder agent will apply clean code principles (SOLID, GRASP, etc.) to improve code quality
 - Ensure all tests continue to pass during refactoring
 - Limit refactoring to the behavior specified in the user story - do not add extra features
 - IMPORTANT: Do NOT refactor the tests themselves unless you explicitly ask for and receive permission
-- Focus on clean code principles while maintaining the exact same functionality
 - STOP after refactoring and ask for permission to commit changes
 
 **COMMIT PHASE:**

@@ -32,6 +32,7 @@ AGENT_DEFS=(
     "problem-analyst:problem-analyst.md:"
     "user-story-writer:user-story-writer.md:"
     "atdd-developer:atdd-developer.md:"
+    "clean-coder:clean-coder-agent.md:"
     "code-smell-detector:code-smell-detector.md:"
     "refactoring-expert:refactoring-expert.md:"
     "test-design-reviewer:test-design-reviewer.md:"

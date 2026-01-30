@@ -17,11 +17,16 @@ Breaks down problem statements into granular, implementable user stories using t
 **Use when:** You need to decompose features into actionable user stories with clear acceptance criteria.
 
 #### atdd-developer
-Implements user stories using Acceptance Test Driven Development (ATDD) methodology. Follows the Red-Green-Refactor cycle systematically.
+Implements user stories using Acceptance Test Driven Development (ATDD) methodology. Follows the Red-Green-Refactor cycle systematically. During the REFACTOR phase, delegates to the **clean-coder** agent for code quality improvements.
 
 **Use when:** You have user stories with acceptance criteria that need systematic implementation using TDD/BDD practices.
 
 ### Code Quality Agents
+
+#### clean-coder
+Refactors code to improve readability, maintainability, and structure following clean code principles. Applies SOLID, GRASP, and other design principles to transform working code into clean, well-structured code. Based on Robert C. Martin's *"Clean Code"* principles.
+
+**Use when:** You have working code that needs to be cleaned up, or during the REFACTOR phase of TDD to improve code quality while keeping tests green.
 
 #### code-smell-detector
 Analyzes code for potential quality issues, design problems, and maintainability concerns. Identifies patterns like God Objects, violation of SOLID principles, and other code smells.
@@ -48,13 +53,16 @@ Evaluates test quality using Dave Farley's testing principles. Scores test suite
 ### Pipeline 1: Feature Development (Problem → Stories → Implementation)
 
 ```
-Problem Statement → problem-analyst → user-story-writer → atdd-developer
+Problem Statement → problem-analyst → user-story-writer → atdd-developer (→ clean-coder)
 ```
 
 **Workflow:**
 1. **problem-analyst**: Analyzes the problem domain, identifies core requirements and constraints
-2. **user-story-writer**: Applies Elephant Carpaccio technique to create small, implementable user stories  
+2. **user-story-writer**: Applies Elephant Carpaccio technique to create small, implementable user stories
 3. **atdd-developer**: Implements each story using Red-Green-Refactor ATDD methodology
+   - RED: Write failing acceptance tests
+   - GREEN: Implement minimal code to pass tests
+   - REFACTOR: Delegates to **clean-coder** for code quality improvements
 
 **Best for:** New feature development, complex requirements, systematic implementation
 
