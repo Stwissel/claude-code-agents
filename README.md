@@ -55,6 +55,11 @@ Calculates a Cognitive Load Index (CLI) score (0-1000) for a codebase, measuring
 
 **Use when:** You want to assess how complex a codebase is to understand, identify cognitive hotspots, prioritize refactoring, or prepare for developer onboarding.
 
+#### test-design-reviewer-v2
+Evaluates test code quality using Dave Farley's 8 Properties of Good Tests, producing a Farley Index score (0-10) with per-property breakdown, signal evidence, worst offenders, and prioritized recommendations. Uses a two-phase methodology: static signal detection (deterministic) blended 60/40 with LLM semantic assessment. Supports Java, Python, JavaScript/TypeScript, Go, and C#.
+
+**Use when:** You want a quantitative assessment of test suite quality, need to identify test smells across a codebase, or want evidence-anchored recommendations for improving test design.
+
 ## Agent Pipelines
 
 ### Pipeline 1: Feature Development (Problem → Stories → Implementation)
