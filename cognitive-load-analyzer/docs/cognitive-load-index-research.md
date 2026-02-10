@@ -1541,4 +1541,4 @@ def calculate_cli(dimensions, weights):
 - Language-specific worked examples for Python, JavaScript/TypeScript, and Go
 - 5 knowledge gaps documented with search details
 - Independent academic validations added for cognitive complexity claims
-- Output written to: `/Users/andrealaforgia/dev/personal/nwave/docs/research/cognitive-load-index-research.md`
+- Output written to: `cognitive-load-analyzer/docs/cognitive-load-index-research.md`

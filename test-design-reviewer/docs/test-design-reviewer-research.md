@@ -2,7 +2,7 @@
 
 ## 1. Research Summary
 
-This document provides the evidence base for designing a **Test Design Reviewer** agent that analyzes test codebases and produces a quantitative **Farley Index** score (0-10), based on Dave Farley's eight Properties of Good Tests. The research covers the theoretical foundation, comparison with alternative frameworks, static detection heuristics for each property, the scoring formula, and architectural decisions for implementation as an nWave agent with deterministic Python-based scoring.
+This document provides the evidence base for designing a **Test Design Reviewer** agent that analyzes test codebases and produces a quantitative **Farley Index** score (0-10), based on Dave Farley's eight Properties of Good Tests. The research covers the theoretical foundation, comparison with alternative frameworks, static detection heuristics for each property, the scoring formula, and architectural decisions for implementation as a Claude Code agent with deterministic Python-based scoring.
 
 ### 1.1 Primary Sources
 
@@ -17,7 +17,7 @@ This document provides the evidence base for designing a **Test Design Reviewer*
 | Peruma et al., "tsDetect" (2020) | Academic tool | AST-based test smell detection across 19 smell types | Independent |
 | Pontillo et al., "Machine Learning-Based Test Smell Detection" (2024) | Academic | ML approaches to test smell classification | Independent |
 | Spadini et al., "Test Smells 20 Years Later" (Springer, 2022) | Empirical study | Validity and reliability of test smell detection; severity thresholds | Independent |
-| Reference implementation (~/dev/claude-code-agents/test-design-reviewer/) | Prototype | Formula verification (arithmetic correctness) only — see limitations in section 9.1 | Derived from Farley |
+| Reference implementation (test-design-reviewer/) | Prototype | Formula verification (arithmetic correctness) only — see limitations in section 9.1 | Derived from Farley |
 
 ### 1.2 Cross-Referenced Findings
 
@@ -436,7 +436,7 @@ The reviewer should operate in two phases:
 Following the cognitive-load-analyzer pattern, implement deterministic scoring in Python scripts:
 
 ```
-nWave/skills/test-design-reviewer/lib/
+skills/test-design-reviewer/lib/
   __init__.py
   core.py              # Sigmoid normalization, aggregation primitives
   signals.py           # Per-property signal extraction from test code
@@ -447,13 +447,13 @@ nWave/skills/test-design-reviewer/lib/
 
 The agent invokes:
 ```bash
-python ~/.claude/skills/nw/test-design-reviewer/lib/cli_calculator.py \
+python ~/.claude/skills/test-design-reviewer/lib/cli_calculator.py \
   analyze-signals '{"test_code": "...", "language": "java"}'
 
-python ~/.claude/skills/nw/test-design-reviewer/lib/cli_calculator.py \
+python ~/.claude/skills/test-design-reviewer/lib/cli_calculator.py \
   compute-farley '{"U": 8, "M": 7, "R": 9, "A": 10, "N": 8, "G": 9, "F": 10, "T": 7}'
 
-python ~/.claude/skills/nw/test-design-reviewer/lib/cli_calculator.py \
+python ~/.claude/skills/test-design-reviewer/lib/cli_calculator.py \
   blend-scores '{"static": {"U": 7, ...}, "llm": {"U": 9, ...}}'
 ```
 
@@ -661,4 +661,4 @@ These properties are real and valuable but fall outside what a static+LLM code r
 - [Samman Coaching — Test Desiderata Learning Hour](https://sammancoaching.org/learning_hours/test_design/test_desiderata.html)
 
 ### Reference Implementation
-- [Reference implementation: ~/dev/claude-code-agents/test-design-reviewer/](file:///Users/andrealaforgia/dev/claude-code-agents/test-design-reviewer/) *(formula verification only — see section 9.1)*
+- Reference implementation: `test-design-reviewer/` *(formula verification only — see section 9.1)*
