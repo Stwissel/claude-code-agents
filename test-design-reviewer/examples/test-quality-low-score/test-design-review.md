@@ -1,215 +1,97 @@
-# Test Design Review: ExpressionParserTest.java
+# Test Design Review
 
-## Property Scores
+## Farley Index: 1.34 / 10.0 (Critical)
 
-| Property | Score | Evidence |
-|----------|-------|----------|
-| Understandable | 2/10 | Cryptic names (`test1`, `test2`), unclear purpose, magic numbers without explanation |
-| Maintainable | 2/10 | Tests implementation details via reflection, tightly coupled to internal state |
-| Repeatable | 2/10 | Depends on file system, timing-sensitive assertions, flaky performance tests |
-| Atomic | 1/10 | Shared static state, tests depend on execution order, `verifyAllTestsRan` enforces order |
-| Necessary | 2/10 | Multiple redundant tests (`testAdditionAgain`, `testAdditionOnceMore`), tests test framework |
-| Granular | 2/10 | `testEverything` has 20+ assertions, failures don't pinpoint issues |
-| Fast | 3/10 | Contains `Thread.sleep(1000ms)`, file I/O operations |
-| First (TDD) | 2/10 | Tests clearly written after implementation, follow implementation structure |
+Tests may be harmful; consider rewriting from scratch. This test file violates every one of Dave Farley's eight Properties of Good Tests. It contains shared mutable static state, explicit test ordering, file system I/O, Thread.sleep calls, reflection to access private fields, cryptic naming, mega-tests, redundant tests, framework-testing assertions, and zero behavioral organization. The test suite provides negative value: it creates maintenance burden without meaningfully verifying production behavior.
 
-## Farley Score: 2.1/10 (Critical)
+### Property Breakdown
 
-**Calculation:**
-```
-(2×1.5 + 2×1.5 + 2×1.25 + 1×1.0 + 2×1.0 + 2×1.0 + 3×0.75 + 2×1.0) / 9
-= (3 + 3 + 2.5 + 1 + 2 + 2 + 2.25 + 2) / 9
-= 17.75 / 9
-= 1.97 ≈ 2.1
-```
+| Property | Static | LLM | Blended | Weight | Weighted | Key Evidence |
+|---|---|---|---|---|---|---|
+| Understandable (U) | 0.2 | 1.5 | 0.7 | 1.50x | 1.04 | 10/12 methods have cryptic names (test1, test2, testEverything); zero @Nested, zero @DisplayName; magic numbers throughout |
+| Maintainable (M) | 4.2 | 2.0 | 3.3 | 1.50x | 4.94 | Reflection access to private `position` field (line 91-92); shared static parser instance never reset; tests coupled to internal state |
+| Repeatable (R) | 0.3 | 1.5 | 0.8 | 1.25x | 0.95 | Thread.sleep (lines 226, 232); file I/O (lines 34, 197-213); System.currentTimeMillis (line 25); System.nanoTime timing assertion (line 116); shared mutable static state (lines 19-22) |
+| Atomic (A) | 0.3 | 1.5 | 0.8 | 1.00x | 0.79 | Shared mutable static fields: parser, testLog, testCounter, lastResult (lines 19-22); @Order annotation (line 266); test2 asserts test1 ran first (line 78); verifyAllTestsRan checks all 11 others executed (line 269) |
+| Necessary (N) | 0.8 | 2.0 | 1.3 | 1.00x | 1.30 | testAdditionAgain duplicates test1 (line 123-131); testAdditionOnceMore duplicates again (line 135-141); testTestFramework asserts assertTrue(true) (lines 241-244); testEverything re-tests all operations already covered |
+| Granular (G) | 0.5 | 2.0 | 1.1 | 1.00x | 1.11 | testEverything has 22 assertions across 7 categories (lines 145-186); test1 has 6 assertions (lines 56-61); testMagicNumbers has 4 assertions with no explanation (lines 254-257); average 5.6 assertions per method |
+| Fast (F) | 0.7 | 2.5 | 1.4 | 0.75x | 1.06 | Thread.sleep(500) twice in testWithDelay totaling 1 second (lines 226, 232); file I/O read/write cycles in testWithFileLogging (lines 197-213); file write in @BeforeAll (line 34) |
+| First / TDD (T) | 0.4 | 1.5 | 0.9 | 1.00x | 0.86 | Zero behavior-driven names; tests mirror implementation rather than specifying behavior; reflection tests internal `position` field; testEverything is a coverage dump, not specification; no AAA structure |
 
-## Detailed Analysis
+### Signal Summary
 
-### Understandable (2/10)
+| Signal | Count | Affects | Severity |
+|---|---|---|---|
+| Cryptic test names (test1, test2, testEverything, etc.) | 10 methods | U, T | High |
+| Shared mutable static state (parser, testLog, testCounter, lastResult) | 4 fields, 12 methods affected | A, R | High |
+| Thread.sleep() | 2 calls (lines 226, 232) | R, F | High |
+| File system I/O (FileWriter, FileReader, PrintWriter) | 3 methods (setupAll, testWithFileLogging, teardownAll) | R, F | High |
+| Reflection / private field access (getDeclaredField, setAccessible) | 1 method (line 91-92) | M | High |
+| @Order annotation (explicit test ordering) | 1 method (line 266) | A | High |
+| Test-order dependency (asserts other tests ran) | 2 methods (test2 line 78, verifyAllTestsRan line 269) | A | High |
+| System.currentTimeMillis (log file name) | 1 occurrence (line 25) | R | Medium |
+| System.nanoTime timing assertion | 1 method (line 116) | R | Medium |
+| Trivial assertions (assertTrue(true), assertFalse(false)) | 4 assertions (lines 241-244) | N | High |
+| Redundant tests (duplicate addition testing) | 2 methods (testAdditionAgain, testAdditionOnceMore) | N | Medium |
+| Mega-test (>20 assertions) | 1 method (testEverything, 22 assertions) | G | High |
+| Multi-assertion tests (>5 assertions) | 3 methods (test1: 6, testEverything: 22, testMagicNumbers: 4) | G | Medium |
+| Magic numbers without explanation | 4 assertions (lines 254-257) | U | Medium |
+| Zero @Nested / @DisplayName / @ParameterizedTest | 0 positive signals across all 12 methods | U, N, G | Medium |
+| Zero behavior-driven naming (should/when/given) | 0 positive signals across all 12 methods | U, T | High |
 
-The tests fail dramatically at communicating intent:
+### Top 5 Worst Offenders
 
-**Cryptic naming:**
-```java
-@Test
-void test1() { ... }  // What does this test?
+1. **ExpressionParserTest.java:145 `testEverything()`** -- Farley ~0.5/10 -- Mega-test with 22 assertions covering 7 unrelated behaviors (arithmetic, parentheses, decimals, negatives, complex expressions, nested parentheses, whitespace, error conditions). If any assertion fails, the failure message gives no clue which behavior is broken. Name describes nothing about what is being verified. This single method should be at least 7 separate tests.
 
-@Test
-void test2() { ... }  // What behavior is being verified?
-```
+2. **ExpressionParserTest.java:267 `verifyAllTestsRan()`** -- Farley ~0.5/10 -- Exists solely to enforce execution order. Uses @Order(Integer.MAX_VALUE) and asserts that testLog.size() == 11 and testCounter >= 11. This is anti-atomic by definition: it cannot pass unless all other tests have already executed in a specific context. It verifies the test harness, not production behavior.
 
-**Magic numbers without context:**
-```java
-assertEquals(42.0, parser.parse("6*7"));
-assertEquals(3.14159, parser.parse("3.14159"), 0.00001);
-// Why these specific numbers? What's being demonstrated?
-```
+3. **ExpressionParserTest.java:220 `testWithDelay()`** -- Farley ~1.0/10 -- Contains two Thread.sleep(500) calls totaling 1 full second of dead time for a single test that verifies `7*8 == 56`. The sleep serves no purpose. This test is both slow and unreliable under CI load.
 
-**Tests don't read like specifications** - a developer cannot understand the parser's behavior by reading these tests.
+4. **ExpressionParserTest.java:191 `testWithFileLogging()`** -- Farley ~1.0/10 -- Writes to /tmp via PrintWriter, reads back via BufferedReader, and searches for "25.0" in the file content. Depends on file system availability, timing of writes, and correctness of the LOG_FILE path which uses System.currentTimeMillis(). The assertion on line 211 (`assertTrue(found, "Result should be logged to file")`) searches for "25.0" but the computed result is actually 25.0 (100/4), so this is a coincidental pass. Contains a subtle bug: line 206 searches for "25.0" in lines that include "Result: 25.0" -- fragile string matching.
 
-### Maintainable (2/10)
+5. **ExpressionParserTest.java:237 `testTestFramework()`** -- Farley ~0.5/10 -- Four assertions that test only the JUnit framework itself: `assertTrue(true)`, `assertFalse(false)`, `assertNotNull(new Object())`, `assertEquals(1, 1)`. Zero production code is exercised. This test would pass even if ExpressionParser did not exist. It is the textbook definition of a test that adds no value.
 
-The tests are extremely brittle:
+### Recommendations
 
-**Testing implementation details:**
-```java
-// Using reflection to access private fields
-var field = ExpressionParser.class.getDeclaredField("position");
-field.setAccessible(true);
-int pos = (int) field.get(p);
-```
+1. **[HIGH IMPACT -- targets U at 1.5x weight] Rename all test methods to describe behavior using given/when/then or shouldX patterns.** Replace `test1()` with methods like `shouldAddTwoNumbers()`, `shouldMultiplyTwoNumbers()`. Replace `testEverything()` with separate tests per behavior: `shouldRespectOperatorPrecedence()`, `shouldHandleNestedParentheses()`, `shouldRejectMalformedExpressions()`. This alone would transform the suite's documentation value.
 
-Any refactoring of internal state will break tests even if behavior is unchanged.
+2. **[HIGH IMPACT -- targets A at 1.0x and R at 1.25x weight] Eliminate all shared mutable static state.** Change `parser` from a `static` field initialized in `@BeforeAll` to an instance field initialized in `@BeforeEach`. Remove `testLog`, `testCounter`, and `lastResult` entirely. Delete `verifyAllTestsRan()`. Each test must be runnable in isolation and in any order.
 
-**Tight coupling to execution environment:**
-```java
-private static final String LOG_FILE = "/tmp/test_log_" + System.currentTimeMillis() + ".txt";
-```
+3. **[HIGH IMPACT -- targets R at 1.25x weight] Remove all file system I/O and timing dependencies.** Delete `LOG_FILE`, the `@BeforeAll` file write, `testWithFileLogging()`, and the `@AfterAll` cleanup. Replace `testPerformance()` (which uses `System.nanoTime` with a hard threshold) with a JMH benchmark or remove it entirely -- performance tests do not belong in unit test suites.
 
-### Repeatable (2/10)
+4. **[MEDIUM IMPACT -- targets N at 1.0x weight] Delete redundant and valueless tests.** Remove `testAdditionAgain()` (duplicates test1), `testAdditionOnceMore()` (duplicates both), and `testTestFramework()` (tests the framework, not production code). Use `@ParameterizedTest` with `@CsvSource` to consolidate arithmetic operation tests into a single parameterized test.
 
-Multiple sources of non-determinism:
+5. **[MEDIUM IMPACT -- targets F at 0.75x weight] Remove Thread.sleep calls and eliminate the reflection test.** The `testWithDelay()` sleeps 1 second for no reason. The `testInternalState()` method uses reflection to access the private `position` field -- testing implementation details that will break on any refactoring. Both should be deleted and replaced with behavior-focused tests.
 
-**Timing-dependent assertions:**
-```java
-assertTrue(elapsed < 100_000_000, "Should complete in under 100ms");
-// Will fail randomly under system load
-```
+### Per-Method Signal Detail
 
-**File system dependencies:**
-```java
-try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE))) { ... }
-// File operations can fail for many environmental reasons
-```
+| Method | Line | Assertions | Signals |
+|---|---|---|---|
+| test1() | 47 | 6 | Cryptic name; shared state write (lastResult, testLog); multi-assertion (6); no AAA structure |
+| test2() | 69 | 3 | Cryptic name; depends on test1 via testLog assertion; shared state write; order-dependent |
+| testInternalState() | 86 | 1 | Reflection (getDeclaredField, setAccessible); tests private field; shared state write |
+| testPerformance() | 105 | 1 | System.nanoTime timing assertion; loop-based benchmark; flaky threshold; shared state write |
+| testAdditionAgain() | 122 | 3 | Redundant (duplicates test1 addition cases); shared state write |
+| testAdditionOnceMore() | 135 | 1 | Redundant (exact duplicate of 1+1 from test1 and testAdditionAgain); shared state write |
+| testEverything() | 145 | 22 | Mega-test; 7 behavior categories; cryptic name; shared state write |
+| testWithFileLogging() | 191 | 2 | File I/O (write + read); fragile string matching; shared state write |
+| testWithDelay() | 220 | 1 | Thread.sleep(500) x2; shared state write |
+| testTestFramework() | 237 | 4 | Trivial assertions (assertTrue(true)); zero production code exercised; shared state write |
+| testMagicNumbers() | 251 | 4 | Magic numbers without explanation; unclear purpose; shared state write |
+| verifyAllTestsRan() | 267 | 2 | @Order(MAX_VALUE); asserts execution order of all other tests; anti-atomic |
 
-**Time-based identifiers:**
-```java
-private static final String LOG_FILE = "/tmp/test_log_" + System.currentTimeMillis() + ".txt";
-// Different file each run, cleanup may fail
-```
+### Methodology Notes
+- Static/LLM blend: 60/40
+- LLM model: claude-opus-4-6
+- Files analyzed: 1 (no sampling needed -- single test file)
+- Test methods analyzed: 12
+- Language: Java
+- Framework: JUnit 5 (org.junit.jupiter.api)
+- Mocking framework: None detected
+- T (First/TDD) note: Static evidence for TDD is necessarily indirect. The LLM assessment carries particular weight for this property. In this case, the complete absence of behavior-driven naming, the presence of implementation-mirroring tests (testInternalState), and the coverage-dump nature of testEverything strongly indicate test-after development.
 
-### Atomic (1/10)
+### Dimensions Not Measured
+Predictive, Inspiring, Composable, Writable (from Beck's Test Desiderata -- require runtime or team context)
 
-Severe isolation violations:
-
-**Shared mutable static state:**
-```java
-private static ExpressionParser parser;
-private static List<String> testLog = new ArrayList<>();
-private static int testCounter = 0;
-private static double lastResult;
-```
-
-**Tests depend on execution order:**
-```java
-@Test
-void test2() {
-    assertTrue(testLog.contains("test1 passed"), "test1 should have run first");
-}
-```
-
-**Explicit order enforcement:**
-```java
-@Test
-@Order(Integer.MAX_VALUE)
-void verifyAllTestsRan() {
-    assertEquals(11, testLog.size(), "All other tests should have run first");
-}
-```
-
-These tests **cannot be run in parallel** and **cannot be run individually**.
-
-### Necessary (2/10)
-
-Significant redundancy and waste:
-
-**Duplicate tests:**
-```java
-@Test void testAdditionAgain() { assertEquals(2.0, parser.parse("1+1")); }
-@Test void testAdditionOnceMore() { assertEquals(2.0, parser.parse("1+1")); }
-// Exact same assertion in multiple tests
-```
-
-**Testing the test framework:**
-```java
-@Test
-void testTestFramework() {
-    assertTrue(true, "True should be true");
-    assertFalse(false, "False should be false");
-    // This tests JUnit, not the parser
-}
-```
-
-### Granular (2/10)
-
-Tests are far too broad:
-
-**Mega-test with 20+ assertions:**
-```java
-@Test
-void testEverything() {
-    assertEquals(2.0, parser.parse("1+1"));
-    assertEquals(6.0, parser.parse("2*3"));
-    // ... 20+ more assertions
-    assertThrows(IllegalArgumentException.class, () -> parser.parse(""));
-    assertThrows(ArithmeticException.class, () -> parser.parse("1/0"));
-}
-```
-
-When this test fails, you must investigate all 20+ assertions to find the problem.
-
-### Fast (3/10)
-
-Unnecessary delays and I/O:
-
-**Explicit sleeps:**
-```java
-@Test
-void testWithDelay() throws Exception {
-    Thread.sleep(500);  // Why?
-    assertEquals(56.0, result);
-    Thread.sleep(500);  // Adds 1 second per test run
-}
-```
-
-**File I/O operations:**
-```java
-try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
-    writer.println("Result: " + result);
-}
-```
-
-### First/TDD (2/10)
-
-Clear indicators that tests were written after implementation:
-
-- Tests follow the implementation structure (testing internal `position` field)
-- No evidence of test-driving design decisions
-- Tests feel like "checkbox exercises" to achieve coverage
-- `testEverything` is a classic "test-after" mega-test
-
-## Top Recommendations
-
-1. **Eliminate shared state** - Each test should create its own `ExpressionParser` instance. Remove all static fields used to track test state.
-
-2. **Split `testEverything` into focused tests** - Create individual tests like `addition_of_two_numbers_returns_sum()`, `multiplication_has_higher_precedence_than_addition()`, etc.
-
-3. **Remove timing and file dependencies** - Delete `testPerformance`, `testWithFileLogging`, and `testWithDelay`. If performance testing is needed, use a dedicated performance testing framework.
-
-4. **Use descriptive test names** - Rename `test1` to `parsingSimpleAddition_returnsSumOfOperands()` or similar behavior-describing names.
-
-5. **Delete redundant tests** - Remove `testAdditionAgain`, `testAdditionOnceMore`, `testTestFramework`, and `verifyAllTestsRan`.
-
-6. **Remove reflection-based tests** - Delete `testInternalState`. Tests should verify behavior, not implementation details.
-
-## Summary
-
-This test suite is a textbook example of anti-patterns. It provides minimal value as documentation, is unreliable, unmaintainable, and actually makes refactoring the production code *harder* rather than enabling it. The shared state and order dependencies mean the tests cannot be parallelized or run individually, severely impacting developer productivity.
-
-**Recommendation:** This test suite should be completely rewritten following TDD principles before any further development on the parser.
-
----
-
-## Reference
-This review is based on Dave Farley's Properties of Good Tests:
+### Reference
+Based on Dave Farley's Properties of Good Tests:
 https://www.linkedin.com/pulse/tdd-properties-good-tests-dave-farley-iexge/

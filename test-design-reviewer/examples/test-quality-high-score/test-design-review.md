@@ -1,243 +1,74 @@
-# Test Design Review: ExpressionParserTest.java
+# Test Design Review
 
-## Property Scores
+## Farley Index: 8.85 / 10.0 (Excellent)
 
-| Property | Score | Evidence |
-|----------|-------|----------|
-| Understandable | 9/10 | Descriptive names, nested classes organize by behavior, tests read like specifications |
-| Maintainable | 9/10 | Tests verify behavior not implementation, proper abstractions with @Nested classes |
-| Repeatable | 10/10 | No external dependencies, no timing, deterministic assertions |
-| Atomic | 10/10 | Each test creates own parser instance, no shared state, fully parallelizable |
-| Necessary | 9/10 | Each test documents distinct behavior, parameterized tests avoid duplication |
-| Granular | 9/10 | Single assertion per test (or single logical assertion), failures pinpoint exact issues |
-| Fast | 10/10 | Pure computation, no I/O, no delays, millisecond execution |
-| First (TDD) | 8/10 | Tests clearly specify behavior first, structure suggests test-driven design |
+High quality test suite with minor improvement opportunities. Tests read like a specification of the ExpressionParser's behavior, are fully deterministic, and exercise only the public API.
 
-## Farley Score: 9.2/10 (Exemplary)
+### Property Breakdown
 
-**Calculation:**
-```
-(9×1.5 + 9×1.5 + 10×1.25 + 10×1.0 + 9×1.0 + 9×1.0 + 10×0.75 + 8×1.0) / 9
-= (13.5 + 13.5 + 12.5 + 10 + 9 + 9 + 7.5 + 8) / 9
-= 83.0 / 9
-= 9.22 ≈ 9.2
-```
+| Property | Static | LLM | Blended | Weight | Weighted | Key Evidence |
+|---|---|---|---|---|---|---|
+| Understandable | 9.49 | 9.5 | 9.50 | 1.50x | 14.25 | 31/31 behavior-driven names, 10 @Nested classes, 41 @DisplayName annotations, AAA structure throughout |
+| Maintainable | 9.36 | 9.0 | 9.22 | 1.50x | 13.83 | Zero mocks, zero reflection, all assertions on public API outputs, no implementation coupling |
+| Repeatable | 9.08 | 10.0 | 9.45 | 1.25x | 11.81 | Pure computation, zero I/O, zero sleep, zero time/random/env dependencies |
+| Atomic | 9.12 | 9.5 | 9.27 | 1.00x | 9.27 | Fresh ExpressionParser per test, no shared state, no ordering, fully parallelizable |
+| Necessary | 4.31 | 8.5 | 5.99 | 1.00x | 5.99 | 2 @ParameterizedTest for variations; each test covers distinct behavior; static score low due to few parameterized markers |
+| Granular | 9.01 | 9.0 | 9.00 | 1.00x | 9.00 | 29/31 tests have 1 assertion; 2 tests have 2 assertions forming logical groups; avg 1.06 assertions/test |
+| Fast | 8.65 | 10.0 | 9.19 | 0.75x | 6.89 | Pure string parsing and arithmetic; zero I/O; microsecond execution per test |
+| First (TDD) | 9.05 | 8.0 | 8.63 | 1.00x | 8.63 | Behavior-organized structure (not implementation-mirrored), public API focus; no git history to confirm test-first |
 
-## Detailed Analysis
+### Signal Summary
 
-### Understandable (9/10)
+| Signal | Count | Affects | Severity |
+|---|---|---|---|
+| Behavior-driven method names | 31 | U+, T+ | Positive |
+| @DisplayName annotations | 41 | U+ | Positive |
+| @Nested class organization | 10 | U+ | Positive |
+| Arrange-Act-Assert structure | 31 | U+, T+ | Positive |
+| Fresh instance per test | 31 | A+ | Positive |
+| Pure computation (no I/O) | 31 | R+, F+ | Positive |
+| @ParameterizedTest usage | 2 | N+ | Positive |
+| Comments explaining evaluation order | 7 | U+ | Positive |
+| Multi-assertion tests (logical groups) | 2 | G- | Low |
 
-The tests excel at communicating intent:
+Zero negative signals detected for: Thread.sleep, reflection, shared state, ordering, file I/O, network, database, system time, random, environment variables, disabled tests, empty tests, trivial assertions, cryptic names, mock anti-patterns.
 
-**Descriptive test names that read as specifications:**
-```java
-@Test
-@DisplayName("multiplication has higher precedence than addition")
-void multiplicationBeforeAddition() { ... }
+### Top 5 Worst Offenders
 
-@Test
-@DisplayName("can produce negative results")
-void subtractingLargerFromSmaller_returnsNegative() { ... }
-```
+This suite has no significantly weak tests. The following are the lowest-scoring methods, identified only because they have two assertions each (logical assertion groups, not true weaknesses):
 
-**Logical organization with @Nested classes:**
-```java
-@Nested
-@DisplayName("when adding numbers")
-class Addition { ... }
+1. `ExpressionParserTest.java:220` -- `dividingByZero_throwsArithmeticException` -- 2 assertions (assertThrows + assertEquals on message). Both verify the same error-reporting outcome. Score impact: negligible.
+2. `ExpressionParserTest.java:327` -- `missingClosingParenthesis_throwsException` -- 2 assertions (assertThrows + assertTrue on message). Both verify the same error-reporting outcome. Score impact: negligible.
+3. `ExpressionParserTest.java:377` -- `rejectsInvalidInput` -- Parameterized test that could be split further to distinguish null vs empty vs whitespace error messages, but combining them is a reasonable design choice.
+4. `ExpressionParserTest.java:33` -- `parsingSingleInteger_returnsItsValue` -- Minor: creates a new parser on every test; a @BeforeEach could reduce repetition. However, explicit instantiation improves readability and isolation.
+5. `ExpressionParserTest.java:432` -- `complexExpressionsAreEvaluatedCorrectly` -- 6 parameterized cases in one test. All test the same behavior (complex expression evaluation) so this is appropriate use of @CsvSource.
 
-@Nested
-@DisplayName("operator precedence")
-class OperatorPrecedence { ... }
-```
+Note: None of these are genuine "offenders." This section is included for completeness. All tests score above 8.0 individually.
 
-**Comments explain WHY, not WHAT:**
-```java
-// 2 + 3 * 4 = 2 + 12 = 14 (not 5 * 4 = 20)
-double result = parser.parse("2+3*4");
-```
+### Recommendations
 
-A developer can understand the parser's complete behavior by reading these tests alone, without looking at implementation.
+1. **[N - Necessary] Consider parameterizing repetitive single-operation tests.** The Addition, Subtraction, Multiplication, and Division @Nested classes each contain 3 tests that follow the same pattern (basic operation, edge case, chaining/precision). These could use @ParameterizedTest with @CsvSource to reduce structural redundancy while maintaining readability. This would raise the static N score significantly. *Impact: would improve Farley Index by ~0.2 points.*
 
-### Maintainable (9/10)
+2. **[M - Maintainable] Extract parser instantiation to reduce duplication.** Every test method contains `ExpressionParser parser = new ExpressionParser();`. While this is explicit and readable, a `@BeforeEach` method or a factory method in the outer class would reduce the 31 repetitions to 1 line. This is a minor maintainability improvement -- the current approach is defensible as it keeps each test fully self-contained. *Impact: marginal.*
 
-Tests are resilient to implementation changes:
+3. **[T - First/TDD] Add edge case tests for boundary behaviors.** To strengthen evidence of specification-first design, consider adding tests for: very large numbers (overflow), multiple decimal points in a number (`1.2.3`), consecutive operators (`5++3`), empty parentheses `()`. These boundary cases are the kind a TDD practitioner would discover during red-green-refactor cycles. *Impact: would strengthen both N and T scores.*
 
-**Tests verify behavior, not implementation:**
-- No reflection to access private fields
-- No testing of internal state
-- Tests only use the public API
+### Methodology Notes
+- Static/LLM blend: 60/40
+- LLM model: claude-opus-4-6
+- Files analyzed: 1 (no sampling required -- under 50 test files)
+- Test methods analyzed: 31 (including 2 @ParameterizedTest methods)
+- Parameterized test cases: 11 total (5 in rejectsInvalidInput, 6 in complexExpressionsAreEvaluatedCorrectly)
+- Language: Java
+- Framework: JUnit 5 (Jupiter)
+- Mocking framework: None detected
+- Mock anti-patterns: N/A (no mocks in codebase)
+- T (First/TDD) scoring note: Static evidence for TDD is inherently indirect. The LLM assessment carries additional interpretive weight for this property. No git history was analyzed.
+- N (Necessary) static/LLM gap: The static score of 4.31 reflects the scorer's limited positive signal vocabulary -- only @ParameterizedTest counts as a positive signal for N. The LLM assessment of 8.5 reflects semantic analysis showing each test covers a genuinely distinct behavior. The blended score of 5.99 is conservatively low for this suite.
 
-**Proper test structure:**
-- Arrange-Act-Assert pattern throughout
-- Clear separation of setup, execution, and verification
+### Dimensions Not Measured
+Predictive, Inspiring, Composable, Writable (from Beck's Test Desiderata -- require runtime or team context)
 
-```java
-@Test
-void parsingSingleInteger_returnsItsValue() {
-    ExpressionParser parser = new ExpressionParser();  // Arrange
-
-    double result = parser.parse("42");                // Act
-
-    assertEquals(42.0, result);                        // Assert
-}
-```
-
-### Repeatable (10/10)
-
-Tests are completely deterministic:
-
-**No external dependencies:**
-- No file system access
-- No network calls
-- No database connections
-
-**No timing sensitivity:**
-- No `Thread.sleep()`
-- No time-based assertions
-- No performance thresholds
-
-**Pure functional tests:**
-- Input → output verification only
-- Same result every time, on any machine
-
-### Atomic (10/10)
-
-Perfect isolation between tests:
-
-**Each test creates its own instance:**
-```java
-@Test
-void addingTwoPositiveIntegers_returnsTheirSum() {
-    ExpressionParser parser = new ExpressionParser();  // Fresh instance
-    ...
-}
-```
-
-**No shared state:**
-- No `static` fields
-- No `@BeforeAll` setup
-- No `@AfterAll` cleanup
-- No test execution order dependencies
-
-**Tests can run:**
-- In any order
-- In parallel
-- Individually
-- As a full suite
-
-### Necessary (9/10)
-
-Each test adds distinct value:
-
-**No redundant tests:**
-- Each test covers a unique behavior
-- No duplicate assertions across tests
-
-**Parameterized tests consolidate similar cases:**
-```java
-@ParameterizedTest(name = "{0} = {1}")
-@CsvSource({
-    "1+2*3-4/2, 5.0",
-    "(1+2)*(3-1), 6.0",
-    ...
-})
-void complexExpressionsAreEvaluatedCorrectly(String expression, double expected) { ... }
-```
-
-**Tests document edge cases:**
-- Division by zero
-- Missing parentheses
-- Invalid characters
-- Negative numbers
-
-### Granular (9/10)
-
-Focused tests with clear failure diagnostics:
-
-**Single assertion per test:**
-```java
-@Test
-void multiplyingByZero_returnsZero() {
-    ExpressionParser parser = new ExpressionParser();
-    double result = parser.parse("999*0");
-    assertEquals(0.0, result);  // One assertion, one behavior
-}
-```
-
-**Exception tests verify specific conditions:**
-```java
-@Test
-void dividingByZero_throwsArithmeticException() {
-    ExpressionParser parser = new ExpressionParser();
-
-    ArithmeticException exception = assertThrows(
-        ArithmeticException.class,
-        () -> parser.parse("5/0")
-    );
-
-    assertEquals("Division by zero", exception.getMessage());
-}
-```
-
-When a test fails, you immediately know exactly what behavior broke.
-
-### Fast (10/10)
-
-Tests execute in milliseconds:
-
-**Pure computation only:**
-- No I/O operations
-- No network calls
-- No sleeps or delays
-- No expensive setup
-
-**Entire suite runs instantly:**
-- Developer feedback loop is immediate
-- Tests can be run continuously during development
-
-### First/TDD (8/10)
-
-Strong indicators of test-first design:
-
-**Tests specify behavior, not implementation:**
-- Focus on "what" the parser should do
-- No knowledge of internal algorithms
-
-**Logical progression of complexity:**
-1. Single numbers
-2. Single operations
-3. Precedence rules
-4. Parentheses
-5. Edge cases
-
-**Tests read as executable specification:**
-The test suite documents the parser's complete contract, which is characteristic of TDD where tests define requirements before implementation.
-
-Scored 8 instead of 9-10 because there's no accompanying history showing red-green-refactor cycles, though the structure strongly suggests TDD.
-
-## Top Recommendations
-
-1. **Consider adding property-based tests** - For a parser, property-based testing could verify invariants like `parse(x + " + 0") == parse(x)` across random inputs.
-
-2. **Add boundary value tests** - Test very large numbers, very small decimals, and deeply nested parentheses to ensure robustness.
-
-3. **Document the test organization** - A brief comment explaining the @Nested structure would help new developers navigate the test suite.
-
-## Summary
-
-This test suite exemplifies Dave Farley's principles. The tests serve as living documentation, are completely reliable, and provide a solid safety net for refactoring. Each test is focused, fast, and independent, enabling rapid development cycles.
-
-**Key strengths:**
-- Tests read like specifications
-- Complete isolation enables parallel execution
-- No external dependencies ensure reliability
-- Focused tests pinpoint failures immediately
-
-This is a model test suite that other projects should emulate.
-
----
-
-## Reference
-This review is based on Dave Farley's Properties of Good Tests:
+### Reference
+Based on Dave Farley's Properties of Good Tests:
 https://www.linkedin.com/pulse/tdd-properties-good-tests-dave-farley-iexge/
