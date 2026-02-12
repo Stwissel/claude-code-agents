@@ -4,13 +4,14 @@ An AI agent that evaluates test code quality using Dave Farley's 8 Properties of
 
 ## Purpose
 
-The test-design-reviewer analyzes test codebases using a two-phase methodology (static signal detection + LLM semantic assessment) to produce a comprehensive test quality report. It detects test smells, evaluates naming quality, checks for isolation issues, and identifies design patterns that indicate test-first or test-after development.
+The test-design-reviewer analyzes test codebases using a two-phase methodology (static signal detection + LLM semantic assessment) to produce a comprehensive test quality report. It detects test smells, mock anti-patterns ("test theatre"), evaluates naming quality, checks for isolation issues, and identifies design patterns that indicate test-first or test-after development.
 
 ## When to Use
 
 Use this agent when:
 - Assessing the quality of a test suite against established testing principles
 - Identifying flaky, brittle, or poorly designed tests
+- Detecting test theatre: mock tautologies, tests with no production code, over-specified mock interactions
 - Auditing test quality across a codebase before a major release
 - Onboarding new developers and want to understand test health
 - Prioritizing test refactoring efforts based on quantitative scores
@@ -44,7 +45,7 @@ Use this agent when:
 
 This agent includes two skill documents (`skills/test-design-reviewer/`):
 - **farley-properties-and-scoring.md** - Property definitions, scoring rubrics (0-10), Farley Index formula, sigmoid normalization, rating scale, and aggregation methodology
-- **signal-detection-patterns.md** - Language-specific static detection heuristics for Java, Python, JavaScript/TypeScript, Go, and C#. Per-property signal tables mapping test smells to Farley properties
+- **signal-detection-patterns.md** - Language-specific static detection heuristics for Java, Python, JavaScript/TypeScript, Go, and C#. Per-property signal tables mapping test smells to Farley properties. Includes mock anti-pattern detection (AP1-AP4) covering 9 mocking frameworks
 
 ## Examples
 
@@ -62,13 +63,29 @@ A problematic test suite (Farley Score: 2.1/10):
 - `ExpressionParserTest.java` - Tests with anti-patterns: cryptic names, shared state, Thread.sleep, reflection, mega-tests
 - `test-design-review.md` - The review showing what makes these tests problematic
 
+## Mock Anti-Pattern Detection (Test Theatre)
+
+The agent detects four mock-specific anti-patterns that produce tests with zero value while appearing structurally sound:
+
+| Anti-Pattern | Severity | What It Catches |
+|---|---|---|
+| **Mock Tautology** (AP1) | Critical | Asserting a mock returns its programmed value -- tests the mocking framework, not production code |
+| **No Production Code Exercised** (AP2) | Critical | All objects are mocks; no real class is instantiated or invoked |
+| **Over-Specified Interactions** (AP3) | High | verify() with exact counts, call ordering, verifyNoMoreInteractions |
+| **Testing Internal Details** (AP4) | High | ArgumentCaptor deep inspection, verify(never()) mirroring branches, type assertions |
+
+Supported mocking frameworks: Mockito (Java), unittest.mock/pytest-mock (Python), Jest/Sinon (JS/TS), testify/gomock (Go), Moq/NSubstitute (C#).
+
 ## Research
 
-The `docs/` folder contains `test-design-reviewer-research.md`, a research document covering:
-- Framework comparison: Farley vs Beck's Test Desiderata vs Meszaros's xUnit Patterns
-- Mapping of Farley properties to detectable test smells
-- Static detection heuristics with precision/recall analysis
-- Scoring formula design and weight rationale
+The `docs/` folder contains:
+- **test-design-reviewer-research.md** - Main research document covering:
+  - Framework comparison: Farley vs Beck's Test Desiderata vs Meszaros's xUnit Patterns
+  - Mapping of Farley properties to detectable test smells
+  - Static detection heuristics with precision/recall analysis
+  - Scoring formula design and weight rationale
+  - Mock anti-patterns and test theatre (section 9)
+- **mock-anti-patterns-research.md** - Detailed research on 4 mock anti-patterns with 22 sources, code examples in all supported languages, regex detection patterns for 9 frameworks, and taxonomy mappings
 
 ## Agent Definition
 
