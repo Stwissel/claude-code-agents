@@ -40,6 +40,7 @@ AGENT_DEFS=(
     "domain-driven-design:ddd-architect-agent.md:ddd-expert-knowledge-base.md"
     "cognitive-load-analyzer:cognitive-load-analyzer.md:"
     "test-design-reviewer:test-design-reviewer.md:"
+    "system-walkthrough:system-walkthrough.md:"
 )
 
 # Skill definitions: "agent-folder:skill-folder-name"
@@ -47,6 +48,7 @@ AGENT_DEFS=(
 SKILL_DEFS=(
     "cognitive-load-analyzer:cognitive-load-analyzer"
     "test-design-reviewer:test-design-reviewer"
+    "system-walkthrough:system-walkthrough"
 )
 
 # Find skill definition by agent folder name
