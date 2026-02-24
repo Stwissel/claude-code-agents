@@ -42,6 +42,7 @@ AGENT_DEFS=(
     "test-design-reviewer:test-design-reviewer.md:"
     "system-walkthrough:system-walkthrough.md:"
     "software-system-auditor:software-system-auditor.md:"
+    "accessibility-assessor:accessibility-assessor.md:"
 )
 
 # Skill definitions: "agent-folder:skill-folder-name"
@@ -51,6 +52,7 @@ SKILL_DEFS=(
     "test-design-reviewer:test-design-reviewer"
     "system-walkthrough:system-walkthrough"
     "software-system-auditor:software-system-auditor"
+    "accessibility-assessor:accessibility-assessor"
 )
 
 # Find skill definition by agent folder name
