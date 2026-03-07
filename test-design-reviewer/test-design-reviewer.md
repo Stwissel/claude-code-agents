@@ -277,3 +277,37 @@ Recommendation: Embed small fixtures as string constants; use testdata/ with t.T
 - It does not assess code coverage, mutation testing results, or CI pipeline health -- only test design quality from source code.
 - It does not install tools without user permission.
 - Token economy: execute analysis efficiently, prefer structured output over prose.
+
+## JSON Data Output
+
+After completing the analysis and producing the structured report, you MUST also write a structured JSON data file named `test-design-reviewer-data.json` in the same output directory as the markdown report.
+
+This JSON file provides machine-readable analysis results for downstream consumption by report aggregation pipelines. The existing report behavior is preserved and unchanged -- this JSON file is an additional output.
+
+The JSON file MUST conform to the following schema exactly:
+
+```json
+{
+  "farley_index": <0.0-10.0>,
+  "rating": "<rating string>",
+  "properties": {"<property>": {"static": <float>, "llm": <float>, "blended": <float>}, ...},
+  "tautology_counts": {"mock_tautology": <int>, "mock_only": <int>, "trivial": <int>, "framework": <int>},
+  "worst_offenders": [{"file": "<path>", "score": <float>, "issues": ["<issue>", ...]}, ...]
+}
+```
+
+**Field descriptions:**
+- `"farley_index"`: The computed Farley Index score (0.0 to 10.0) using the weighted formula
+- `"rating"`: The human-readable rating string (e.g., "Exemplary", "Excellent", "Good", "Fair", "Poor", "Critical")
+- `"properties"`: Per-property scores keyed by property name (e.g., "Understandable", "Maintainable", "Repeatable", "Atomic", "Necessary", "Granular", "Fast", "First"). Each entry contains `"static"`, `"llm"`, and `"blended"` float scores
+- `"tautology_counts"`: Counts of each tautology theatre type -- `"mock_tautology"`, `"mock_only"`, `"trivial"`, `"framework"`
+- `"worst_offenders"`: List of the worst-offending test files, each with `"file"` path, overall `"score"`, and list of `"issues"`
+
+**Requirements:**
+1. All fields are required -- do not omit any field
+2. The `"farley_index"` must be between 0.0 and 10.0
+3. All 8 properties must be present in the `"properties"` object
+4. All tautology count values must be >= 0
+5. The `"worst_offenders"` list should contain up to 5 entries
+6. Write valid JSON -- use double quotes for all keys and string values
+7. Write the file using the Bash tool with a heredoc or echo command

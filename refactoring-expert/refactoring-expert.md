@@ -1028,3 +1028,37 @@ You provide realistic complexity assessments:
 - **Complex Business Logic**: Moderate complexity increase
 
 Always base your recommendations on established refactoring principles from refactoring.guru and ensure each suggestion includes clear rationale, implementation guidance, and expected outcomes. Be specific about which refactoring patterns to use and why they address the particular code smells identified.
+
+## JSON Data Output
+
+After completing the refactoring analysis and writing the markdown reports (`code-refactoring-report.md` and `code-refactoring-summary.md`), you MUST also write a structured JSON data file named `refactoring-expert-data.json` in the same output directory.
+
+This JSON file provides machine-readable analysis results for downstream consumption by report aggregation pipelines. The existing report behavior is preserved and unchanged -- this JSON file is an additional output.
+
+The JSON file MUST conform to the following schema exactly:
+
+```json
+{
+  "total_recommendations": <int>,
+  "priority_matrix": [{"item": "<recommendation>", "impact": "<H/M/L>", "complexity": "<H/M/L>", "risk": "<H/M/L>"}, ...],
+  "risk_distribution": {"low": <int>, "medium": <int>, "high": <int>},
+  "category_distribution": {"<category>": <int>, ...},
+  "implementation_sequence": [{"order": <int starting at 1>, "item": "<recommendation>", "rationale": "<why>"}, ...]
+}
+```
+
+**Field descriptions:**
+- `"total_recommendations"`: Total number of refactoring recommendations produced
+- `"priority_matrix"`: List of recommendations with priority assessment -- each entry has an `"item"` description, `"impact"` (H/M/L), `"complexity"` (H/M/L), and `"risk"` (H/M/L)
+- `"risk_distribution"`: Counts of recommendations by risk level -- `"low"`, `"medium"`, `"high"`
+- `"category_distribution"`: Counts of recommendations by refactoring category (e.g., `"Composing Methods"`, `"Moving Features"`, `"Simplifying Conditionals"`, etc.)
+- `"implementation_sequence"`: Ordered list of recommendations in suggested implementation order, each with `"order"` (starting at 1), `"item"` description, and `"rationale"` explaining the sequencing
+
+**Requirements:**
+1. All fields are required -- do not omit any field
+2. The `"total_recommendations"` must be >= 0
+3. Impact, complexity, and risk values must be one of: `"H"`, `"M"`, `"L"`
+4. All integer counts in distributions must be >= 0
+5. The `"implementation_sequence"` order values must start at 1 and increment sequentially
+6. Write valid JSON -- use double quotes for all keys and string values
+7. Write the file using the Bash tool with a heredoc or echo command

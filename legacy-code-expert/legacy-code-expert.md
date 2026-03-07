@@ -109,3 +109,46 @@ Based on Michael Feathers' "Working Effectively with Legacy Code"
 - Consider the cost/benefit of each technique
 - Document the reasoning for future maintainers
 - Recognize when a full rewrite might be more appropriate than incremental change
+
+## JSON Data Output
+
+After completing the legacy code analysis and writing the analysis report, you MUST also write a structured JSON data file named `legacy-code-expert-data.json` in the same output directory.
+
+This JSON file provides machine-readable analysis results for downstream consumption by report aggregation pipelines. The existing report behavior is preserved and unchanged -- this JSON file is an additional output.
+
+The JSON file MUST conform to the following schema exactly:
+
+```json
+{
+  "overall_score": <0.0-10.0>,
+  "risk_level": "Low"|"Medium"|"High"|"Critical",
+  "dependency_count": <int>,
+  "testability_score": <0.0-1.0>,
+  "seam_availability": {"object": <int>, "link": <int>, "preprocessing": <int>},
+  "modules_at_risk": [{"file": "<path>", "risk": "<level>", "dependencies": <int>, "seams": <int>}, ...]
+}
+```
+
+**Field descriptions:**
+- `"overall_score"`: Self-assessed overall legacy code health score (0.0 to 10.0). You MUST assess this using the rubric below and include a brief justification in the markdown report explaining why you assigned this score
+- `"risk_level"`: Overall risk classification -- one of `"Low"`, `"Medium"`, `"High"`, or `"Critical"`
+- `"dependency_count"`: Total number of external dependencies identified across the codebase
+- `"testability_score"`: Overall testability score (0.0 to 1.0) where 1.0 means fully testable and 0.0 means untestable
+- `"seam_availability"`: Counts of available seam types -- `"object"` (polymorphism-based), `"link"` (linker-based), `"preprocessing"` (macro/conditional compilation)
+- `"modules_at_risk"`: List of modules with highest risk, each with `"file"` path, `"risk"` level, `"dependencies"` count, and available `"seams"` count
+
+**overall_score Rubric:**
+- 9-10: Excellent -- well-tested code with clear seams, low coupling, easy to modify safely
+- 7-8: Good -- mostly testable with some dependency issues, adequate seams available
+- 5-6: Moderate -- mixed testability, several dependency-breaking techniques needed
+- 3-4: Poor -- significant untested code, high coupling, few seams, risky to modify
+- 0-2: Critical -- no tests, deeply coupled, no seams, extremely high risk of regression
+
+**Requirements:**
+1. All fields are required -- do not omit any field
+2. The `"overall_score"` must be between 0.0 and 10.0 with rubric justification in the markdown report
+3. The `"risk_level"` must be one of: `"Low"`, `"Medium"`, `"High"`, `"Critical"`
+4. The `"testability_score"` must be between 0.0 and 1.0
+5. All integer counts must be >= 0
+6. Write valid JSON -- use double quotes for all keys and string values
+7. Write the file using the Bash tool with a heredoc or echo command

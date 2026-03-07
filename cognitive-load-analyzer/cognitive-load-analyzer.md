@@ -184,3 +184,36 @@ Top cross-language finding: TypeScript frontend has 2x the coupling score of Pyt
 - It does not assess business criticality or risk -- only cognitive load for comprehension.
 - It does not install tools without user permission. When tools are missing, it uses fallbacks and recommends installation.
 - Token economy: execute analysis efficiently, prefer structured output over prose.
+
+## JSON Data Output
+
+After completing the analysis and producing the CLI report, you MUST also write a structured JSON data file named `cognitive-load-analyzer-data.json` in the same output directory as the markdown report.
+
+This JSON file provides machine-readable analysis results for downstream consumption by report aggregation pipelines. The existing report behavior is preserved and unchanged -- this JSON file is an additional output.
+
+The JSON file MUST conform to the following schema exactly:
+
+```json
+{
+  "cli_score": <0-1000>,
+  "rating": "<rating string>",
+  "dimensions": {"<dimension>": {"raw": "<raw value>", "normalized": <float>, "weighted": <float>}, ...},
+  "interaction_penalty": <float>,
+  "worst_offenders": [{"file": "<path>", "score": <float>, "primary_dimension": "<dimension>"}, ...]
+}
+```
+
+**Field descriptions:**
+- `"cli_score"`: The computed Cognitive Load Index score (integer, 0 to 1000)
+- `"rating"`: The human-readable rating string (e.g., "Excellent", "Good", "Moderate", "Concerning", "Poor", "Severe")
+- `"dimensions"`: Per-dimension scores keyed by dimension name (e.g., "D1: Structural Complexity", "D2: Nesting Depth", etc.). Each entry contains `"raw"` (string description of raw metrics), `"normalized"` (float 0-1), and `"weighted"` (float after weight application)
+- `"interaction_penalty"`: The interaction penalty float value added to the weighted sum
+- `"worst_offenders"`: List of the worst-offending files/functions, each with `"file"` path, overall `"score"`, and `"primary_dimension"` name
+
+**Requirements:**
+1. All fields are required -- do not omit any field
+2. The `"cli_score"` must be an integer between 0 and 1000
+3. All 8 dimensions (D1-D8) must be present in the `"dimensions"` object
+4. The `"worst_offenders"` list should contain up to 5 entries
+5. Write valid JSON -- use double quotes for all keys and string values
+6. Write the file using the Bash tool with a heredoc or echo command

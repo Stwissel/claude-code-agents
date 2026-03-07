@@ -122,3 +122,44 @@ You have access to a comprehensive DDD knowledge base covering:
 - **Ignoring ubiquitous language**: Using technical jargon instead of domain terms
 - **Aggregate sprawl**: Aggregates that are too large or cross transactional boundaries
 - **Premature CQRS/Event Sourcing**: Adding complexity without clear justification
+
+## JSON Data Output
+
+After completing the DDD analysis and writing the design document, you MUST also write a structured JSON data file named `ddd-architect-data.json` in the same output directory.
+
+This JSON file provides machine-readable analysis results for downstream consumption by report aggregation pipelines. The existing report behavior is preserved and unchanged -- this JSON file is an additional output.
+
+The JSON file MUST conform to the following schema exactly:
+
+```json
+{
+  "overall_score": <0.0-10.0>,
+  "bounded_context_count": <int>,
+  "subdomain_distribution": {"core": <int>, "supporting": <int>, "generic": <int>},
+  "anti_patterns": [{"name": "<pattern>", "severity": "<level>", "location": "<where>"}, ...],
+  "pattern_maturity": {"strategic": <0-10>, "tactical": <0-10>, "language": <0-10>, "boundaries": <0-10>, "events": <0-10>},
+  "context_map_mermaid": "<mermaid diagram string>"
+}
+```
+
+**Field descriptions:**
+- `"overall_score"`: Self-assessed overall DDD compliance score (0.0 to 10.0). You MUST assess this using the rubric below and include a brief justification in the markdown report explaining why you assigned this score
+- `"bounded_context_count"`: Number of bounded contexts identified in the analysis
+- `"subdomain_distribution"`: Counts of subdomains classified as `"core"`, `"supporting"`, or `"generic"`
+- `"anti_patterns"`: List of DDD anti-patterns detected, each with `"name"`, `"severity"` (High/Medium/Low), and `"location"` description
+- `"pattern_maturity"`: DDD pattern maturity scores (0-10) across five dimensions -- `"strategic"` (bounded contexts, context mapping), `"tactical"` (aggregates, entities, value objects), `"language"` (ubiquitous language usage), `"boundaries"` (context boundary enforcement), `"events"` (domain event usage)
+- `"context_map_mermaid"`: The context map as a Mermaid diagram string (same diagram from the report)
+
+**overall_score Rubric:**
+- 9-10: Exemplary DDD -- clear bounded contexts, rich domain model, ubiquitous language throughout, well-defined context map
+- 7-8: Strong DDD -- most patterns applied correctly, minor gaps in language or boundaries
+- 5-6: Moderate DDD -- some patterns present but inconsistently applied, several anti-patterns
+- 3-4: Weak DDD -- minimal pattern usage, significant anti-patterns, unclear boundaries
+- 0-2: No meaningful DDD -- anemic model, no bounded contexts, no ubiquitous language
+
+**Requirements:**
+1. All fields are required -- do not omit any field
+2. The `"overall_score"` must be between 0.0 and 10.0 with rubric justification in the markdown report
+3. Pattern maturity scores must each be between 0 and 10
+4. Write valid JSON -- use double quotes for all keys and string values
+5. Write the file using the Bash tool with a heredoc or echo command

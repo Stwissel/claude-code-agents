@@ -715,3 +715,39 @@ grep -r "import.*\.impl\.\|import.*\.concrete\." .
 
 **PRIMARY REFACTORING TECHNIQUES:**
 Extract Method, Extract Class, Move Method/Field, Rename Method, Replace with Object, Introduce Null Object, Hide Delegate, Inline Function/Class, Collapse Hierarchy, Pull Up Method, Push Down Method, Form Template Method, Replace Delegation with Inheritance
+
+## JSON Data Output
+
+After completing the analysis and writing the markdown reports (`code-smell-detector-report.md` and `code-smell-detector-summary.md`), you MUST also write a structured JSON data file named `code-smell-detector-data.json` in the same output directory.
+
+This JSON file provides machine-readable analysis results for downstream consumption by report aggregation pipelines. The existing markdown report behavior is preserved and unchanged -- this JSON file is an additional output.
+
+The JSON file MUST conform to the following schema exactly:
+
+```json
+{
+  "grade": "A"|"B"|"C"|"D"|"F",
+  "total_issues": <int >= 0>,
+  "severity_distribution": {"high": <int>, "medium": <int>, "low": <int>},
+  "category_distribution": {"<category>": <int>, ...},
+  "solid_compliance": {"SRP": <0-10>, "OCP": <0-10>, "LSP": <0-10>, "ISP": <0-10>, "DIP": <0-10>},
+  "top_issues": [{"file": "<path>", "issue": "<description>", "severity": "<level>", "category": "<category>"}, ...]
+}
+```
+
+**Field descriptions:**
+- `"grade"`: Overall code quality grade (A through F) based on the grading scale defined above
+- `"total_issues"`: Total number of code smells detected across all severity levels
+- `"severity_distribution"`: Breakdown of issues by severity -- `"high"`, `"medium"`, `"low"` counts
+- `"category_distribution"`: Breakdown of issues by smell category (e.g., `"Bloaters"`, `"Couplers"`, `"Change Preventers"`, etc.)
+- `"solid_compliance"`: SOLID principle compliance scores on a 0-10 scale for each principle (SRP, OCP, LSP, ISP, DIP). Higher scores indicate better compliance
+- `"top_issues"`: List of the most impactful issues found, each with the file path, issue description, severity level, and category
+
+**Requirements:**
+1. All fields are required -- do not omit any field
+2. The `"grade"` value must be one of: `"A"`, `"B"`, `"C"`, `"D"`, `"F"`
+3. All integer counts must be >= 0
+4. SOLID compliance scores must be between 0 and 10
+5. The `"top_issues"` list should contain up to 10 of the highest-impact issues
+6. Write valid JSON -- use double quotes for all keys and string values
+7. Write the file using the Bash tool with a heredoc or echo command
