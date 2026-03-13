@@ -1,4 +1,4 @@
-# ALF -- Claude Code Agents
+# Andrea Laforgia's Claude Code Agents
 
 A collection of specialized agents for software development workflows, designed to work together in pipelines for comprehensive problem-solving and code quality improvement. All agents use the `alf-` namespace prefix.
 
